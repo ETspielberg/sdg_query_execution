@@ -1,0 +1,172 @@
+import csv
+import json
+import requests
+import os
+
+from flask import Flask
+from flask import request
+from collections import namedtuple
+
+from model.ScopusCitationResponse import ScopusCitationResponse
+from model.ScopusSearchResponse import ScopusResponse
+
+app = Flask(__name__)
+# app.config.from_object('yourapplication.default_settings')
+app.config.from_envvar("LIBINTEL_SETTINGS")
+
+location = app.config.get("LIBINTEL_DATA_DIR")
+elsevier_url = app.config.get("ELSEVIER_URL")
+scopus_api_key = app.config.get("SCOPUS_API_KEY")
+unpaywall_api_url = app.config.get("UNPAYWALLL_API_URL")
+libintel_user_email = app.config.get("LIBINTEL_USER_EMAIL")
+
+def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
+def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
+
+
+def convert_search_to_scopus_search_string(search):
+    search_string = ""
+    if search["author"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "AUTH(" + search["author"] + ")"
+    if search["topic"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "TITLE-ABS-KEY(" + search["topic"] + ")"
+    if search["year"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "Year(" + search["year"] + ")"
+    if search["title"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "TITLE(" + search["title"] + ")"
+    if search["subject"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "SUBJAREA(" + search["subject"] + ")"
+    if search["auth_id"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += "AU-ID(" + search["auth_id"] + ")"
+    return search_string
+
+
+def convert_citation_response_to_object(response):
+    scopus_citation_response = ScopusCitationResponse()
+
+    return scopus_citation_response
+
+
+@app.route('/query_execution', methods=['POST'])
+def query_execution():
+    # prepare location for saving data
+    global scopus_response
+    if not os.path.exists(location):
+        os.makedirs(location)
+
+    # load the search queries from the http POST body
+    search = request.get_json(silent=True)
+
+    #convert the JSON search object to the search string for the scopus api
+    search_string = convert_search_to_scopus_search_string(search).replace(" ", "+")
+
+    # define the number of results for further requests
+    results_per_page = 100
+
+    # define the url to be queried, first of all get only the number of results
+    url = elsevier_url + '/content/search/scopus?count=1&query=' + search_string + '&apiKey=' + scopus_api_key
+    print("querying URL: " + url)
+
+    # perform the query
+    r = requests.get(url)
+    if r.status_code == 200:
+        # convert response to JSON object
+        scopus_first_response = r.json()
+
+        # read the total number of results
+        number_of_results = int(scopus_first_response['search-results']['opensearch:totalResults'])
+        print(number_of_results)
+
+        publication_set = []
+
+        # if results have been found, query all the results
+        if number_of_results != 0:
+            number_of_calls = number_of_results // results_per_page + 1
+            print("performing " + str(number_of_calls) + " calls")
+            for i in range(number_of_calls):
+                start = i * results_per_page
+                url = elsevier_url + '/content/search/scopus?start=' + str(start) + '&count=' + str(results_per_page) + '&query=' + search_string + '&apiKey=' + scopus_api_key
+                r = requests.get(url)
+                print("queryied URL: " + url + " with status code " + str(r.status_code))
+                if r.status_code == 200:
+                    for document in r.json()['search-results']['entry']:
+                        scopus_response = ScopusResponse()
+                        try:
+                            if document['pubmed_id'] is not None:
+                                scopus_response.pubmed_id = document['pubmed_id']
+                        except KeyError:
+                            print("Scopus: no PubMed ID given")
+                        else:
+                            print("Scopus: no PubMed ID given")
+                        try:
+                            if document['prism:doi'] is not None:
+                                scopus_response.doi = document['prism:doi']
+                        except KeyError:
+                            print("Scopus: no PubMed ID given")
+                        else:
+                            print("Scopus: no PubMed ID given")
+
+                        if document['dc:identifier'] is not None:
+                            scopus_response.scopus_id = document['dc:identifier']
+                        else:
+                            print("Scopus: no Scopus ID given")
+                        if document['eid'] is not None:
+                            scopus_response.eid = document['eid']
+                        else:
+                            print("Scopus: no EID given")
+                        if document['prism:url'] is not None:
+                            scopus_response.url = document['prism:url']
+                        else:
+                            print("Scopus: no URL given")
+                        if document['citedby-count'] is not None:
+                            scopus_response.cited_by_scopus = document['citedby-count']
+                        else:
+                            print("Scopus: no Cited-By given")
+                            scopus_response.response = document
+                        publication_set.append(scopus_response)
+            for publication in publication_set:
+                if publication.scopus_id is not None:
+                    url = elsevier_url + '/content/abstract/citation?scopus_id=' + publication.scopus_id + '&apiKey=' + scopus_api_key
+                    r = requests.get(url)
+                    print("queryied URL: " + url + " with status code " + str(r.status_code))
+                    if r.status_code == 200:
+                        publication.citation_response = r.json()
+                        print(publication.citation_response)
+                if publication.doi is not None:
+                    url = unpaywall_api_url + '/' + publication.doi + "?email=" + libintel_user_email
+                    r = requests.get(url)
+                    print("queryied URL: " + url + " with status code " + str(r.status_code))
+                    if r.status_code == 200:
+                        publication.unpaywall_response = r.json()
+                        print(publication.unpaywall_response)
+
+    return "OK"
+
+
+def persist_ebs_list(ebs_titles):
+    payload = json.dumps([ob.__dict__ for ob in ebs_titles])
+    url = 'http://localhost:11200/ebsData/saveList'
+    headers = {'content-type': 'application/json'}
+    post = requests.post(url, data=payload, headers=headers)
+    print(post.status_code)
+
+
+def save_ebs_list_file(ebs_titles, ebs_filename, ebs_model, ebs_mode):
+    with open(location + "\\" + ebs_model + "\\" + ebs_filename.replace(".csv", "_") + ebs_mode + "_out.csv", 'w', newline='') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=';',
+                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        spamwriter.writerow(['ISBN', 'Title', 'Subject area', 'price', 'year', 'total usage', 'price per usage', 'selected', 'EBS model ID', 'weighting factor'])
+        for item in ebs_titles:
+            spamwriter.writerow([item.isbn, '"' + item.title + '"', item.subject_area, str(item.price), str(item.year), str(item.total_usage), str(item.cost_per_usage), str(item.selected), ebs_model, str(item.weighting_factor)])
