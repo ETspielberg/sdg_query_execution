@@ -5,11 +5,9 @@ import os
 
 from flask import Flask
 from flask import request
-from collections import namedtuple
-
-from model.ScopusCitationResponse import ScopusCitationResponse
 from model.ScopusSearchResponse import ScopusResponse
 
+# configure FLASK and get the parameters from the settings file
 app = Flask(__name__)
 # app.config.from_object('yourapplication.default_settings')
 app.config.from_envvar("LIBINTEL_SETTINGS")
@@ -20,10 +18,9 @@ scopus_api_key = app.config.get("SCOPUS_API_KEY")
 unpaywall_api_url = app.config.get("UNPAYWALLL_API_URL")
 libintel_user_email = app.config.get("LIBINTEL_USER_EMAIL")
 
-def _json_object_hook(d): return namedtuple('X', d.keys())(*d.values())
-def json2obj(data): return json.loads(data, object_hook=_json_object_hook)
 
-
+# read in the JSON-data from the request and convert them to a scopus query string
+# (one could add alternative query targets here, for example transforming the individual query strings to a WoS-Search
 def convert_search_to_scopus_search_string(search):
     search_string = ""
     if search["author"]:
@@ -53,12 +50,6 @@ def convert_search_to_scopus_search_string(search):
     return search_string
 
 
-def convert_citation_response_to_object(response):
-    scopus_citation_response = ScopusCitationResponse()
-
-    return scopus_citation_response
-
-
 @app.route('/query_execution', methods=['POST'])
 def query_execution():
     # prepare location for saving data
@@ -69,13 +60,13 @@ def query_execution():
     # load the search queries from the http POST body
     search = request.get_json(silent=True)
 
-    #convert the JSON search object to the search string for the scopus api
+    # convert the JSON search object to the search string for the scopus api
     search_string = convert_search_to_scopus_search_string(search).replace(" ", "+")
 
     # define the number of results for further requests
     results_per_page = 100
 
-    # define the url to be queried, first of all get only the number of results
+    # define the url to be queried, first of all get only the number of results, hence only 1 result per page
     url = elsevier_url + '/content/search/scopus?count=1&query=' + search_string + '&apiKey=' + scopus_api_key
     print("querying URL: " + url)
 
@@ -93,16 +84,22 @@ def query_execution():
 
         # if results have been found, query all the results
         if number_of_results != 0:
+
+            # calculate the number of requests necessary
             number_of_calls = number_of_results // results_per_page + 1
-            print("performing " + str(number_of_calls) + " calls")
+
+            # perform the individual calls
             for i in range(number_of_calls):
                 start = i * results_per_page
                 url = elsevier_url + '/content/search/scopus?start=' + str(start) + '&count=' + str(results_per_page) + '&query=' + search_string + '&apiKey=' + scopus_api_key
                 r = requests.get(url)
-                print("queryied URL: " + url + " with status code " + str(r.status_code))
+
+                # if results are obtained create a ScopusResponse object with all the necessary identifiers accessible.
                 if r.status_code == 200:
                     for document in r.json()['search-results']['entry']:
                         scopus_response = ScopusResponse()
+
+                        # for each identifier, test, whether it is present and if so, attach it to the Scopus response object.
                         try:
                             if document['pubmed_id'] is not None:
                                 scopus_response.pubmed_id = document['pubmed_id']
@@ -134,16 +131,28 @@ def query_execution():
                             scopus_response.cited_by_scopus = document['citedby-count']
                         else:
                             print("Scopus: no Cited-By given")
-                            scopus_response.response = document
+
+                        # attach the actual scopus response
+                        scopus_response.response = document
+
+                        # add the complete scopus response object to the list
                         publication_set.append(scopus_response)
+
+            # now we have a list of all the publications from the intial query.
+            # we go through every one of them and query scopus for citation information, Altmetric for societal impact
+            # and Unpaywall for the Open Access information.
+            # aach response is added to the intial Scopus response object
+
             for publication in publication_set:
+                # first get the citation data from Scopus
                 if publication.scopus_id is not None:
                     url = elsevier_url + '/content/abstract/citation?scopus_id=' + publication.scopus_id + '&apiKey=' + scopus_api_key
                     r = requests.get(url)
                     print("queryied URL: " + url + " with status code " + str(r.status_code))
                     if r.status_code == 200:
                         publication.citation_response = r.json()
-                        print(publication.citation_response)
+
+                # then retrieve the Open Access data from Unpaywall
                 if publication.doi is not None:
                     url = unpaywall_api_url + '/' + publication.doi + "?email=" + libintel_user_email
                     r = requests.get(url)
@@ -155,14 +164,18 @@ def query_execution():
     return "OK"
 
 
-def persist_ebs_list(ebs_titles):
-    payload = json.dumps([ob.__dict__ for ob in ebs_titles])
+# to be changed, persist via posting
+# TO DO: replace posting by persisting in database. Agree on data structure
+def persist_list(scopus_responses):
+    payload = json.dumps([ob.__dict__ for ob in scopus_responses])
     url = 'http://localhost:11200/ebsData/saveList'
     headers = {'content-type': 'application/json'}
     post = requests.post(url, data=payload, headers=headers)
     print(post.status_code)
 
 
+# to be changed, persist all necessary fields on disk
+# TO DO: agree on data structure
 def save_ebs_list_file(ebs_titles, ebs_filename, ebs_model, ebs_mode):
     with open(location + "\\" + ebs_model + "\\" + ebs_filename.replace(".csv", "_") + ebs_mode + "_out.csv", 'w', newline='') as csvfile:
         spamwriter = csv.writer(csvfile, delimiter=';',
