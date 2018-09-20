@@ -50,10 +50,20 @@ def convert_search_to_scopus_search_string(search):
     return search_string
 
 
+def get_group_search_term(group):
+    string = ""
+    for id in group.split():
+        if string != "":
+            string += " AND "
+        string += id
+    string = 'AF-ID(' + string + ')'
+    return string
+
+
+
 @app.route('/query_execution', methods=['POST'])
 def query_execution():
     # prepare location for saving data
-    global scopus_response
     if not os.path.exists(location):
         os.makedirs(location)
 
@@ -62,6 +72,12 @@ def query_execution():
 
     # convert the JSON search object to the search string for the scopus api
     search_string = convert_search_to_scopus_search_string(search).replace(" ", "+")
+
+    # get the list of groups to be analyzed from the request. each group is defined by a comma separated list of identifiers
+    if search['groups']:
+        groups = search['groups']
+    else:
+        groups = []
 
     # define the number of results for further requests
     results_per_page = 100
@@ -78,7 +94,15 @@ def query_execution():
 
         # read the total number of results
         number_of_results = int(scopus_first_response['search-results']['opensearch:totalResults'])
-        print(number_of_results)
+        print('total number of publications for this query: ' + str(number_of_results))
+
+        for group in groups:
+            search_string_group = search_string + get_group_search_term(group)
+            url = elsevier_url + '/content/search/scopus?count=1&query=' + search_string + '&apiKey=' + scopus_api_key
+            r.request(url)
+            group.response = r.json()
+            group.number = group.response['search-results']['opensearch:totalResults']
+            print('number of publications for group ' + group + ': ' + str(group.number))
 
         publication_set = []
 
