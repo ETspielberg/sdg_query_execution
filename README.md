@@ -67,7 +67,7 @@ For a development version the following code can be executed:
 ./venv/Scripts/activate
 $env:FLASK_APP="start.py"
 $env:FLASK_ENV="development"
-$env:LIBINTEL_SETTINGS = "${USER_HOME}\.libintel\config\query_execution.cfg"
+$env:LIBINTEL_SETTINGS = "${USER_HOME}\\.libintel\\config\\query_execution.cfg"
 python -m flask run
 ```
 
