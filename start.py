@@ -5,7 +5,8 @@ import os
 
 from flask import Flask
 from flask import request
-from model.ScopusSearchResponse import ScopusResponse
+from elasticsearch import Elasticsearch
+es = Elasticsearch()
 
 # configure FLASK and get the parameters from the settings file
 app = Flask(__name__)
@@ -14,6 +15,8 @@ app.config.from_envvar("LIBINTEL_SETTINGS")
 
 location = app.config.get("LIBINTEL_DATA_DIR")
 elsevier_url = app.config.get("ELSEVIER_URL")
+altmetric_url = app.config.get("ALTMETRIC_URL")
+altmetric_key = app.config.get("ALTMETRIC_API_KEY")
 scopus_api_key = app.config.get("SCOPUS_API_KEY")
 unpaywall_api_url = app.config.get("UNPAYWALLL_API_URL")
 libintel_user_email = app.config.get("LIBINTEL_USER_EMAIL")
@@ -23,7 +26,7 @@ libintel_user_email = app.config.get("LIBINTEL_USER_EMAIL")
 # (one could add alternative query targets here, for example transforming the individual query strings to a WoS-Search
 def convert_search_to_scopus_search_string(search):
     search_string = ""
-    if search["author"]:
+    if search["author_name"]:
         if search_string != "":
             search_string += " AND "
         search_string += "AUTH(" + search["author"] + ")"
@@ -34,7 +37,7 @@ def convert_search_to_scopus_search_string(search):
     if search["year"]:
         if search_string != "":
             search_string += " AND "
-        search_string += "Year(" + search["year"] + ")"
+        search_string += "PUBYEAR(" + search["year"] + ")"
     if search["title"]:
         if search_string != "":
             search_string += " AND "
@@ -43,22 +46,15 @@ def convert_search_to_scopus_search_string(search):
         if search_string != "":
             search_string += " AND "
         search_string += "SUBJAREA(" + search["subject"] + ")"
-    if search["auth_id"]:
+    if search["author_id"]:
         if search_string != "":
             search_string += " AND "
-        search_string += "AU-ID(" + search["auth_id"] + ")"
+        search_string += "AU-ID(" + search["author_id"] + ")"
+    if search["affiliation_id"]:
+        if search_string != "":
+            search_string += " AND "
+        search_string += 'AF-ID(' + search["affiliation_id"] + ')'
     return search_string
-
-
-def get_group_search_term(group):
-    string = ""
-    for id in group.split():
-        if string != "":
-            string += " AND "
-        string += id
-    string = 'AF-ID(' + string + ')'
-    return string
-
 
 
 @app.route('/query_execution', methods=['POST'])
@@ -70,14 +66,12 @@ def query_execution():
     # load the search queries from the http POST body
     search = request.get_json(silent=True)
 
+    print(search)
+
+    query_id = search['identifier']
+
     # convert the JSON search object to the search string for the scopus api
     search_string = convert_search_to_scopus_search_string(search).replace(" ", "+")
-
-    # get the list of groups to be analyzed from the request. each group is defined by a comma separated list of identifiers
-    if search['groups']:
-        groups = search['groups']
-    else:
-        groups = []
 
     # define the number of results for further requests
     results_per_page = 100
@@ -96,14 +90,6 @@ def query_execution():
         number_of_results = int(scopus_first_response['search-results']['opensearch:totalResults'])
         print('total number of publications for this query: ' + str(number_of_results))
 
-        for group in groups:
-            search_string_group = search_string + get_group_search_term(group)
-            url = elsevier_url + '/content/search/scopus?count=1&query=' + search_string + '&apiKey=' + scopus_api_key
-            r.request(url)
-            group.response = r.json()
-            group.number = group.response['search-results']['opensearch:totalResults']
-            print('number of publications for group ' + group + ': ' + str(group.number))
-
         publication_set = []
 
         # if results have been found, query all the results
@@ -121,71 +107,35 @@ def query_execution():
                 # if results are obtained create a ScopusResponse object with all the necessary identifiers accessible.
                 if r.status_code == 200:
                     for document in r.json()['search-results']['entry']:
-                        scopus_response = ScopusResponse()
+                        print(document)
+                        # now we query scopus for citation information, Altmetric for societal impact
+                        # and Unpaywall for the Open Access information.
+                        # each response is added to the intial Scopus response object
+                        # doing this within the loop reduces the "pressure" on the APIs
+                        extendData(document)
 
-                        # for each identifier, test, whether it is present and if so, attach it to the Scopus response object.
-                        try:
-                            if document['pubmed_id'] is not None:
-                                scopus_response.pubmed_id = document['pubmed_id']
-                        except KeyError:
-                            print("Scopus: no PubMed ID given")
-                        else:
-                            print("Scopus: no PubMed ID given")
-                        try:
-                            if document['prism:doi'] is not None:
-                                scopus_response.doi = document['prism:doi']
-                        except KeyError:
-                            print("Scopus: no PubMed ID given")
-                        else:
-                            print("Scopus: no PubMed ID given")
-
-                        if document['dc:identifier'] is not None:
-                            scopus_response.scopus_id = document['dc:identifier']
-                        else:
-                            print("Scopus: no Scopus ID given")
-                        if document['eid'] is not None:
-                            scopus_response.eid = document['eid']
-                        else:
-                            print("Scopus: no EID given")
-                        if document['prism:url'] is not None:
-                            scopus_response.url = document['prism:url']
-                        else:
-                            print("Scopus: no URL given")
-                        if document['citedby-count'] is not None:
-                            scopus_response.cited_by_scopus = document['citedby-count']
-                        else:
-                            print("Scopus: no Cited-By given")
-
-                        # attach the actual scopus response
-                        scopus_response.response = document
+                        # then we save the extended document to an elastic search index.
+                        # from this index, we can construct the table used for further analysis.
+                        send_to_index(document, query_id)
 
                         # add the complete scopus response object to the list
-                        publication_set.append(scopus_response)
-
-            # now we have a list of all the publications from the intial query.
-            # we go through every one of them and query scopus for citation information, Altmetric for societal impact
-            # and Unpaywall for the Open Access information.
-            # aach response is added to the intial Scopus response object
-
-            for publication in publication_set:
-                # first get the citation data from Scopus
-                if publication.scopus_id is not None:
-                    url = elsevier_url + '/content/abstract/citation?scopus_id=' + publication.scopus_id + '&apiKey=' + scopus_api_key
-                    r = requests.get(url)
-                    print("queryied URL: " + url + " with status code " + str(r.status_code))
-                    if r.status_code == 200:
-                        publication.citation_response = r.json()
-
-                # then retrieve the Open Access data from Unpaywall
-                if publication.doi is not None:
-                    url = unpaywall_api_url + '/' + publication.doi + "?email=" + libintel_user_email
-                    r = requests.get(url)
-                    print("queryied URL: " + url + " with status code " + str(r.status_code))
-                    if r.status_code == 200:
-                        publication.unpaywall_response = r.json()
-                        print(publication.unpaywall_response)
-
+                        publication_set.append(document)
+            save_to_file(publication_set)
     return "OK"
+
+
+def extendData(publication):
+    # first get the complete set of data from Scopus
+    get_extended_data_from_scopus(publication)
+
+    # then the extended citation data from Scopus
+    # get_citation_data_from_scopus(publication)
+
+    # get impact data from altmetrics
+    get_altmetric_data(publication)
+
+    # then retrieve the Open Access data from Unpaywall
+    get_unpaywall_data(publication)
 
 
 # to be changed, persist via posting
@@ -198,12 +148,58 @@ def persist_list(scopus_responses):
     print(post.status_code)
 
 
-# to be changed, persist all necessary fields on disk
-# TO DO: agree on data structure
-def save_ebs_list_file(ebs_titles, ebs_filename, ebs_model, ebs_mode):
-    with open(location + "\\" + ebs_model + "\\" + ebs_filename.replace(".csv", "_") + ebs_mode + "_out.csv", 'w', newline='') as csvfile:
-        spamwriter = csv.writer(csvfile, delimiter=';',
-                                quotechar='|', quoting=csv.QUOTE_MINIMAL)
-        spamwriter.writerow(['ISBN', 'Title', 'Subject area', 'price', 'year', 'total usage', 'price per usage', 'selected', 'EBS model ID', 'weighting factor'])
-        for item in ebs_titles:
-            spamwriter.writerow([item.isbn, '"' + item.title + '"', item.subject_area, str(item.price), str(item.year), str(item.total_usage), str(item.cost_per_usage), str(item.selected), ebs_model, str(item.weighting_factor)])
+def send_to_index(document, query_id):
+    res = es.index(query_id, 'full-data', document)
+    print('saved to index ' + query_id)
+    return res['result']
+
+
+# persist the resulting json document on disk
+def save_to_file(documents):
+    out_dir = location + '/out/'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    with open(out_dir + 'data_out.json', 'w') as json_file:
+        json.dump(documents, json_file)
+    print('saved results to disk')
+
+
+def get_extended_data_from_scopus(document):
+    if document['prism:doi'] is not None:
+        url = elsevier_url + '/content/abstract/doi/' + document['prism:doi'] + '?apiKey=' + scopus_api_key + '&httpAccept=application%2Fjson'
+        r = requests.get(url)
+        print("queryied URL: " + url + " with status code " + str(r.status_code))
+        if r.status_code == 200:
+            response = r.json()
+            try:
+                del response['abstracts-retrieval-response']['item']
+            except KeyError:
+                print('no additional classification')
+            document['extended_data'] = response
+
+
+def get_citation_data_from_scopus(document):
+    if document['prism:doi'] is not None:
+        url = elsevier_url + '/content/abstract/citations?doi=' + document['prism:doi'] + '&apiKey=' + scopus_api_key
+        r = requests.get(url)
+        print("queryied URL: " + url + " with status code " + str(r.status_code))
+        if r.status_code == 200:
+            document['citation_response'] = r.json()
+
+
+def get_unpaywall_data(document):
+    if document['prism:doi'] is not None:
+        url = unpaywall_api_url + '/' + document['prism:doi'] + "?email=" + libintel_user_email
+        r = requests.get(url)
+        print("queryied URL: " + url + " with status code " + str(r.status_code))
+        if r.status_code == 200:
+            document['unpaywall_response'] = r.json()
+
+
+def get_altmetric_data(document):
+    if document['prism:doi'] is not None:
+        url = altmetric_url + '/doi/' + document['prism:doi'] + '?key=' + altmetric_key
+        r = requests.get(url)
+        print("queryied URL: " + url + " with status code " + str(r.status_code))
+        if r.status_code == 200:
+            document['altmetric_response'] = r.json()
