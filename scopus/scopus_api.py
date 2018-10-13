@@ -569,10 +569,6 @@ UR  - https://doi.org/{doi}
         ris += 'ER  - \n\n'
         return ris
 
-    def toJSON(self):
-        return json.dumps(self, default=lambda o: o.__getstate__(),
-                          sort_keys=True, indent=4)
-
 
 class _ScopusAuthor(object):
     """An internal class for a author in a ScopusAbstract."""

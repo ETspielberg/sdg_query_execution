@@ -29,7 +29,6 @@ scopus_api_key = app.config.get("SCOPUS_API_KEY")
 libintel_user_email = app.config.get("LIBINTEL_USER_EMAIL")
 
 # initialize the API connectors for Unpaywall and Altmetric.
-unpaywall = Unpaywall(libintel_user_email)
 altmetric = Altmetric()
 altmetric.set_key(altmetric_key)
 altmetric.set_secret(altmetric_secret)
@@ -93,8 +92,8 @@ def query_execution():
 
             # get doi and collect unpaywall data and Altmetric data
             doi = scopus_abstract.doi
-            # if doi is not "":
-                # response.unpaywall_response = unpaywall.get_data_by_doi(doi)
+            if doi is not "":
+                response.unpaywall_response = Unpaywall(libintel_user_email, doi)
                 # response.altmetric_response = altmetric.get_data_for_doi(doi)
 
             # add response to list of responses
@@ -128,12 +127,10 @@ def save_eids_to_file(eids, out_dir):
 
 
 def send_to_index(all_responses: AllResponses, query_id):
-    res1 = es.index(query_id, 'scopus_abstract', all_responses.scopus_abtract_retrieval.toJSON(), all_responses.id)
-    # res2 = es.index(query_id, 'unpaywall', all_responses.unpaywall_response.toJSON(), all_responses.id)
-    # res3 = es.index(query_id, 'altmetric', all_responses.altmetric_response.toJSON(), all_responses.id)
-    # res = res1['result'] + res2['result'] + res3['result']
-    # print('saved to index ' + query_id)
-    return res1
+    all_responses_json = json.dumps(all_responses, cls=HiddenEncoder)
+    res = es.index(query_id, 'all_data', all_responses_json, all_responses.id)
+    print('saved to index ' + query_id)
+    return res
 
 
 # persist the resulting json document on disk
@@ -143,3 +140,7 @@ def save_to_file(documents, out_dir):
     with open(out_dir + 'data_out.json', 'w') as json_file:
         json.dump(documents, json_file)
     print('saved results to disk')
+
+class HiddenEncoder(json.JSONEncoder):
+    def default(self, o):
+        return {k.lstrip('_'): v for k, v in o.__getstate__().items()}
