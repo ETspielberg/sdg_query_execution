@@ -431,7 +431,10 @@ def save_relevance_measures_to_file(relevance_measures, out_dir):
 
 def save_status(status, out_dir):
     with open(out_dir + 'status.json', 'w') as json_file:
-        json_file.write(json.dumps(status.__dict__))
+        try:
+            json_file.write(json.dumps(status.__dict__))
+        except AttributeError:
+            json_file.write(status)
         json_file.close()
 
 
