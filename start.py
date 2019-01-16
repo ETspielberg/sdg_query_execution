@@ -404,6 +404,10 @@ def collectData(project):
     with open(out_dir + 'abstracts.json', 'w') as json_file:
         json_file.write(json.dumps([ob.__dict__ for ob in keyword_list]))
         json_file.close()
+    with open(out_dir + 'missed_eids.txt', 'w') as list_file:
+        for eid in missed_eids:
+            list_file.write(eid + '\n')
+        list_file.close()
 
 
 def save_relevance_measures_to_file(relevance_measures, out_dir):
