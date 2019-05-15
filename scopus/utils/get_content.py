@@ -73,6 +73,7 @@ def download(url, params=None, accept="xml"):
     header.update({'Accept': 'application/{}'.format(accept)})
     print('querying scopus at url: ' + url)
     resp = requests.get(url, headers=header, params=params)
+    print('querying scopus at url: ' + resp.url)
     print('queried scopus with response code ' + str(resp.status_code))
     tries = 0
     response = resp.status_code

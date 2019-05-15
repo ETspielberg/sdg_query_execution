@@ -3,6 +3,7 @@ import os
 from json import JSONDecodeError
 
 import scopus
+import numpy as np
 import csv
 import random
 # import pytextrank
@@ -160,6 +161,16 @@ def get_eids(query_id):
         return send_file(path_to_file, attachment_filename='eids_list.txt')
     except IOError:
         return Response('no list of missed eids', status=404)
+
+
+def open_eids(query_id, prefix):
+    # path to the file
+    out_dir = location + '/out/' + query_id + '/'
+    with open(out_dir + prefix + 'eids_list.txt') as f:
+        eids = f.readlines()
+        f.close()
+        # remove whitespace characters like `\n` at the end of each line
+    return [x.strip() for x in eids]
 
 
 # download the file with the missed EIDs from the search, stored in the working directory as missed_eids_list.txt
@@ -515,7 +526,7 @@ def data_collection_execution(query_id):
 
     project['isQueryRun'] = True
     save_project(project)
-    Response({"status": "FINISHED"}, status=204)
+    return Response({"status": "FINISHED"}, status=204)
 
 
 @app.route('/prepare_abstracts/<query_id>', methods=['POST'])
@@ -540,6 +551,83 @@ def count_keywords(query_id):
 #     for graf in pytextrank.parse_doc(pytextrank.json_iter(path_to_file)):
 #         print(pytextrank.pretty_print(graf))
 #     return "ok"
+
+@app.route('/analysis/overlap', methods=['GET'])
+def calculate_overlap():
+    print('calculating overview')
+    list_ids = request.args.getlist('primary')
+    second_list = request.args.getlist('secondary')
+    if second_list.__len__() == 0:
+        array = calculate_symmetric_overlap(list_ids)
+        length_func = np.vectorize(get_length)
+        print(length_func(array))
+        return Response({"status": "FINISHED"}, status=200)
+    else:
+        calculate_asymmetric_overlap(list_ids, second_list)
+        return Response({"status": "FINISHED"}, status=200)
+
+
+def get_length(x):
+    if x is not None:
+        return len(x)
+    else:
+        return 0
+
+
+def calculate_symmetric_overlap(primary):
+    primary_length = len(primary)
+    overlap_map = np.empty((primary_length, primary_length), dtype=object)
+    data = {}
+    for key in primary:
+        data[key] = open_eids(key, '')
+    for i in range(0, primary_length):
+        for entry in data[primary[i]]:
+            found = False
+            for j in range(i+1, primary_length):
+                if entry in data[primary[j]]:
+                    if overlap_map[i, j] is None:
+                        overlap_map[i, j] = [entry]
+                        overlap_map[j, i] = [entry]
+                    else:
+                        overlap_map[i, j].append(entry)
+                        overlap_map[j, i].append(entry)
+                    found = True
+            if not found:
+                if overlap_map[i, i] is None:
+                    overlap_map[i, i] = [entry]
+                else:
+                    overlap_map[i, i].append(entry)
+    return overlap_map
+
+
+def calculate_asymmetric_overlap(primary, secondary):
+    primary_length = primary.__len__()
+    secondary_length = secondary.__len__()
+    overlap_map = np.empty((primary_length, secondary_length), dtype=object)
+    data = {}
+    for key in primary:
+        data[key] = open_eids(key, '')
+    for key in secondary:
+        data[key] = open_eids(key, '')
+    for i in range(0, primary_length):
+        for entry in data[primary[i]]:
+            found = False
+            for j in range(0, secondary):
+                if j == i:
+                    continue
+                if entry in data[secondary[j]]:
+                    if overlap_map[i, j] is None:
+                        overlap_map[i, j] = [entry]
+                    else:
+                        overlap_map[i, j].append(entry)
+                    found = True
+            if not found:
+                if overlap_map[i, i] is None:
+                    overlap_map[i, i] = [entry]
+                else:
+                    overlap_map[i, i].append(entry)
+    return overlap_map
+
 
 class HiddenEncoder(json.JSONEncoder):
     def default(self, o):
