@@ -49,6 +49,7 @@ def data_collection_execution(query_id):
 
             # add scopus abstract to AllResponses object
             response.scopus_abtract_retrieval = scopus_abstract
+            print(dir(scopus_abstract))
 
             # get doi and collect unpaywall data and Altmetric data
             doi = scopus_abstract.doi

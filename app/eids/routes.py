@@ -4,7 +4,7 @@
 import os
 import random
 
-from flask import render_template, send_file, Response, request, jsonify
+from flask import send_file, Response, request, jsonify
 
 from model.RelevanceMeasures import RelevanceMeasure
 from service import eids_service, project_service, relevance_measure_service
@@ -113,7 +113,7 @@ def check_test_eids(query_id):
 
     # load collected eids
     eids = eids_service.load_eid_list(query_id)
-    relevance_measure = relevance_measure_service.get_relevance_measures(query_id)
+    relevance_measure = relevance_measure_service.load_relevance_measure(query_id)
     if relevance_measure is None:
         relevance_measure = RelevanceMeasure()
     relevance_measure.number_of_search_results = eids.__len__()
@@ -178,7 +178,7 @@ def upload_sample_judgement_file(query_id):
     path_to_save = location + '/out/' + query_id + '/'
     if not os.path.exists(path_to_save):
         os.makedirs(path_to_save)
-    file.save(path_to_save + 'test_eids_list.txt')
+    file.save(path_to_save + 'sample_judgement_eids_list.json')
     project['isTestdata'] = True
     project_service.save_project(project)
     return Response('list saved', status=204)

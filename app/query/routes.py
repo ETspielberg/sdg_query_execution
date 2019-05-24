@@ -2,7 +2,6 @@ from flask import Response, request, jsonify
 
 import scopus
 from model.Query import Query
-from model.RelevanceMeasures import RelevanceMeasure
 from model.Status import Status
 from service import project_service, query_service, status_service, eids_service, relevance_measure_service
 from . import query_blueprint
@@ -66,12 +65,11 @@ def query_execution(query_id):
     eids = search.EIDS
 
     # set the total number of results to the relevance_measures measure save it to disk
-    relevance_measure = RelevanceMeasure()
-    relevance_measure.total_number_of_query_results = eids.__len__()
+    relevance_measure = {'total_number_of_query_results': eids.__len__()}
     relevance_measure_service.save_relevance_measures(query_id, relevance_measure)
 
     # set the total number of results to the status save it to disk
-    status.total = relevance_measure.total_number_of_query_results
+    status.total = relevance_measure['total_number_of_query_results']
     status_service.save_status(query_id, status)
 
     # print the results to the command line for logging

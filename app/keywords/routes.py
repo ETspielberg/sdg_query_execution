@@ -12,11 +12,24 @@ es = Elasticsearch()
 @keywords_blueprint.route("/collect/<query_id>")
 def get_keywords(query_id):
     try:
-        result = es.search(index=query_id, doc_type='all_data',
-                           filter_path=["hits.hits._source.scopus_abtract_retrieval.authkeywords", "hits.hits._id"])
+        page = es.search(index=query_id, doc_type='all_data', size=1000, scroll='3m')
+        sid = page['_scroll_id']
+        scroll_size = page['hits']['total']
         keyword_list = []
-        for hit in result["hits"]["hits"]:
-            keyword_list.extend(hit["_source"]["scopus_abtract_retrieval"]["authkeywords"])
+        for hit in page["hits"]["hits"]:
+            try:
+                keyword_list.extend(hit["_source"]["scopus_abtract_retrieval"]["authkeywords"])
+            except KeyError:
+                print('no keywords given')
+        while (scroll_size > 0):
+            page = es.scroll(scroll_id=sid, scroll='3m')
+            sid = page['_scroll_id']
+            scroll_size = len(page['hits']['hits'])
+            for hit in page["hits"]["hits"]:
+                try:
+                    keyword_list.extend(hit["_source"]["scopus_abtract_retrieval"]["authkeywords"])
+                except KeyError:
+                    print('no keywords given')
         dictionary = utils.wordlist_to_freq_dict(keyword_list)
         sorted_dict = utils.sort_freq_dict(dictionary)
         return json.dumps([ob.__dict__ for ob in sorted_dict])

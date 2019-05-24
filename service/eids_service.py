@@ -1,3 +1,4 @@
+import json
 import os
 
 from flask import current_app as app
@@ -25,3 +26,13 @@ def save_eid_list(project_id, eids, prefix=''):
         for eid in eids:
             list_file.write(eid + '\n')
         list_file.close()
+
+
+def load_judgement_file(project_id, prefix=''):
+    with app.app_context():
+        location = app.config.get("LIBINTEL_DATA_DIR")
+    path_to_file = location + '/out/' + project_id + '/' + prefix + ''
+    with open(path_to_file) as json_file:
+        project = json.load(json_file)
+        json_file.close()
+        return project
