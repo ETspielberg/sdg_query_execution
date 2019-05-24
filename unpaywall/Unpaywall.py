@@ -1,14 +1,17 @@
 import requests
+from flask import current_app as app
 
 
 class Unpaywall:
 
-    def __init__(self, email, doi):
+    def __init__(self, doi):
+        with app.app_context():
+            email = app.config.get("LIBINTEL_USER_EMAIL")
         self.unpaywall_url = "https://api.unpaywall.org/my/request"
         self.email = email
         url = self.unpaywall_url + '/' + doi + "?email=" + self.email
         r = requests.get(url)
-        # print("queryied URL: " + url + " with status code " + str(r.status_code))
+        print("queryied URL: " + url + " with status code " + str(r.status_code))
         if r.status_code == 200:
             self.json = r.json()['results'][0]
             self._doi = self.json['doi']
@@ -26,6 +29,20 @@ class Unpaywall:
             except KeyError:
                 self._title = "no title given"
             self._url = self.json['url']
+        else:
+            self.json = None
+            self._doi = None
+            self._doi_resolver = None
+            self._evidence = None
+            self._free_fulltext_url = None
+            self._is_boai_license = None
+            self._is_free_to_read = None
+            self._is_subscription_journal = None
+            self._license = None
+            self._oa_color = None
+            self._reported_noncompliant_copies = None
+            self._title = None
+            self._url = None
 
     @property
     def doi(self):

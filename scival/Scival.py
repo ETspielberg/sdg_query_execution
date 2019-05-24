@@ -33,7 +33,13 @@ class Scival:
             self._scopus_affil_ids = row[28].split(', ')
             self._scopus_affil_names = row[29].split('; ')
             self._country = row[30].split(', ')
-            self._all_science_classification = row[31].split('; ')
+            self._all_science_classification_code = row[31].split('; ')
+            self._all_science_classification_name = row[32].split('; ')
+            self.topic_cluster_name = row[33]
+            self.topic_cluster_number = row[34]
+            self.topic_name = row[35]
+            self.topic_number = row[36]
+
         else:
             self._title = ''
             self._authors = ''

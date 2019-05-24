@@ -1,12 +1,18 @@
 import requests
 
+from flask import current_app as app
+
 
 class Altmetric:
 
-    def __init__(self, api_key, doi):
+    def __init__(self, doi):
+        with app.app_context():
+            api_key = app.config.get("ALTMETRIC_API_KEY")
+            secret = app.config.get("ALTMETRIC_API_SECRET")
+
         self.altmetric_url = "https://api.altmetric.com/v1"
         self.api_key = api_key
-        url = self.altmetric_url + '/doi/' + doi + '?key=' + self.api_key
+        url = self.altmetric_url + '/doi/' + doi # + '?key=' + self.api_key
         r = requests.get(url)
         print("queryied URL: " + url + " with status code " + str(r.status_code))
         if r.status_code == 200:
@@ -181,6 +187,48 @@ class Altmetric:
                 self._details_url = None
         else:
             print(r.content)
+            self._tile = None
+            self._doi = None
+            self._pmid = None
+            self._tq = None
+            self._uri = None
+            self._altmetric_jid = None
+            self._issns = None
+            self._journal = None
+            self._cohorts = None
+            self._abstract = None
+            self._abstract_source = None
+            self._context = None
+            self._authors = None
+            self._type = None
+            self._altmetric_id = None
+            self._schema = None
+            self._is_oa = None
+            self._publisher_subjects = None
+            self._cited_by_fbwalls_count = None
+            self._cited_by_feeds_count = None
+            self._cited_by_gplus_count = None
+            self._cited_by_msm_count = None
+            self._cited_by_policies_count = None
+            self._cited_by_posts_count = None
+            self._cited_by_rdts_count = None
+            self._cited_by_tweeters_count = None
+            self._cited_by_videos_count = None
+            self._cited_by_wikipedia_count = None
+            self._cited_by_patents_count = None
+            self._cited_by_accounts_count = None
+            self._last_updated = None
+            self._score = None
+            self._history = None
+            self._url = None
+            self._added_on = None
+            self._published_on = None
+            self._subjects = None
+            self._scopus_subjects = None
+            self._readers = None
+            self._readers_count = None
+            self._images = None
+            self._details_url = None
     @property
     def title(self):
         return self._title
