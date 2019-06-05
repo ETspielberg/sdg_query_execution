@@ -42,6 +42,23 @@ def download_missed_eids(query_id):
         return Response('no list of missed eids', status=404)
 
 
+@eids_blueprint.route("/lastChange/<query_id>", methods=['GET'])
+def get_last_change(query_id):
+    return str(eids_service.get_last_change(query_id, ''))
+
+
+@eids_blueprint.route("/dateOfTest/<query_id>", methods=['GET'])
+def get_data_of_test_eids(query_id):
+    return str(eids_service.get_last_change(query_id, 'test_'))
+
+
+@eids_blueprint.route("/dateOfSample/<query_id>", methods=['GET'])
+def get_date_of_sample_eids(query_id):
+    return str(eids_service.get_last_change(query_id, 'sample_'))
+
+
+
+
 # download the file with the missed EIDs from the search, stored in the working directory as missed_eids_list.txt
 @eids_blueprint.route("/calculateSample/<query_id>", methods=['GET'])
 def calculate_sample(query_id):

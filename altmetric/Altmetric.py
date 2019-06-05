@@ -14,7 +14,7 @@ class Altmetric:
         self.api_key = api_key
         url = self.altmetric_url + '/doi/' + doi # + '?key=' + self.api_key
         r = requests.get(url)
-        print("queryied URL: " + url + " with status code " + str(r.status_code))
+        # print("queryied URL: " + url + " with status code " + str(r.status_code))
         if r.status_code == 200:
             self.json = r.json()
             try:
@@ -186,7 +186,6 @@ class Altmetric:
             except KeyError:
                 self._details_url = None
         else:
-            print(r.content)
             self._tile = None
             self._doi = None
             self._pmid = None
@@ -231,178 +230,304 @@ class Altmetric:
             self._details_url = None
     @property
     def title(self):
-        return self._title
+        try:
+            return self._title
+        except AttributeError:
+            return None
 
     @property
     def doi(self):
-        return self._doi
+        try:
+            return self._doi
+        except AttributeError:
+            return None
 
     @property
     def pmid(self):
-        return self._pmid
+        try:
+            return self._pmid
+        except AttributeError:
+            return None
 
     @property
     def tq(self):
-        return self._tq
+        try:
+            return self._tq
+        except AttributeError:
+            return None
 
     @property
     def uri(self):
-        return self._uri
+        try:
+            return self._uri
+        except AttributeError:
+            return None
 
     @property
     def altmetric_jid(self):
-        return self._altmetric_jid
+        try:
+            return self._altmetric_jid
+        except AttributeError:
+            return None
 
     @property
     def issns(self):
-        return self._issns
+        try:
+            return self._issns
+        except AttributeError:
+            return None
 
     @property
     def journal(self):
-        return self._journal
+        try:
+            return self._journal
+        except AttributeError:
+            return None
 
     @property
     def cohorts(self):
-        return self._cohorts
+        try:
+            return self._cohorts
+        except AttributeError:
+            return None
 
     @property
     def abstract(self):
-        return self._abstract
+        try:
+            return self._abstract
+        except AttributeError:
+            return None
 
     @property
     def abstract_source(self):
-        return self._abstract_source
+        try:
+            return self._abstract_source
+        except AttributeError:
+            return None
 
     @property
     def context(self):
-        return self._context
+        try:
+            return self._context
+        except AttributeError:
+            return None
 
     @property
     def authors(self):
-        return self._authors
+        try:
+            return self._authors
+        except AttributeError:
+            return None
 
     @property
     def type(self):
-        return self._type
+        try:
+            return self._type
+        except AttributeError:
+            return None
 
     @property
     def altmetric_id(self):
-        return self._altmetric_id
+        try:
+            return self._altmetric_id
+        except AttributeError:
+            return None
 
     @property
     def schema(self):
-        return self._schema
+        try:
+            return self._schema
+        except AttributeError:
+            return None
 
     @property
     def is_oa(self):
-        return self._is_oa
+        try:
+            return self._is_oa
+        except AttributeError:
+            return None
 
     @property
     def publisher_subjects(self):
-        return self._publisher_subjects
+        try:
+            return self._publisher_subjects
+        except AttributeError:
+            return None
 
     @property
     def cited_by_fbwalls_count(self):
-        return self._cited_by_fbwalls_count
+        try:
+            return self._cited_by_fbwalls_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_feeds_count(self):
-        return self._cited_by_feeds_count
+        try:
+            return self._cited_by_feeds_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_gplus_count(self):
-        return self._cited_by_gplus_count
+        try:
+            return self._cited_by_gplus_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_msm_count(self):
-        return self._cited_by_msm_count
+        try:
+            return self._cited_by_msm_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_policies_count(self):
-        return self._cited_by_policies_count
+        try:
+            return self._cited_by_policies_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_posts_count(self):
-        return self._cited_by_posts_count
+        try:
+            return self._cited_by_posts_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_rdts_count(self):
-        return self._cited_by_rdts_count
+        try:
+            return self._cited_by_rdts_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_tweeters_count(self):
-        return self._cited_by_tweeters_count
+        try:
+            return self._cited_by_tweeters_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_videos_count(self):
-        return self._cited_by_videos_count
+        try:
+            return self._cited_by_videos_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_wikipedia_count(self):
-        return self._cited_by_wikipedia_count
+        try:
+            return self._cited_by_wikipedia_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_patents_count(self):
-        return self._cited_by_patents_count
+        try:
+            return self._cited_by_patents_count
+        except AttributeError:
+            return None
 
     @property
     def cited_by_accounts_count(self):
-        return self._cited_by_accounts_count
+        try:
+            return self._cited_by_accounts_count
+        except AttributeError:
+            return None
 
     @property
     def last_updated(self):
-        return self._last_updated
+        try:
+            return self._last_updated
+        except AttributeError:
+            return None
 
     @property
     def score(self):
-        return self._score
+        try:
+            return self._score
+        except AttributeError:
+            return None
 
     @property
     def history(self):
-        return self._history
+        try:
+            return self._history
+        except AttributeError:
+            return None
 
     @property
     def url(self):
-        return self._url
+        try:
+            return self._url
+        except AttributeError:
+            return None
 
     @property
     def added_on(self):
-        return self._added_on
+        try:
+            return self._added_on
+        except AttributeError:
+            return None
 
     @property
     def published_on(self):
-        return self._published_on
+        try:
+            return self._published_on
+        except AttributeError:
+            return None
 
     @property
     def subjects(self):
-        return self._subjects
+        try:
+            return self._subjects
+        except AttributeError:
+            return None
 
     @property
     def scopus_subjects(self):
-        return self._scopus_subjects
+        try:
+            return self._scopus_subjects
+        except AttributeError:
+            return None
 
     @property
     def readers(self):
-        return self._readers
+        try:
+            return self._readers
+        except AttributeError:
+            return None
 
     @property
     def readers_count(self):
-        return self._readers_count
+        try:
+            return self._readers_count
+        except AttributeError:
+            return None
 
     @property
     def images(self):
-        return self._images
+        try:
+            return self._images
+        except AttributeError:
+            return None
 
     @property
     def details_url(self):
-        return self._details_url
+        try:
+            return self._details_url
+        except AttributeError:
+            return None
 
     def __getstate__(self):
         state = self.__dict__.copy()
         try:
             del state['json']
         except KeyError:
-            print('no JSON data')
+            print('no Altmetric data found data')
         del state['api_key']
         del state['altmetric_url']
         return state

@@ -1,8 +1,8 @@
 from collections import Counter
 
+import scopus as scopus
 from flask import Response, request
 
-import scopus
 from altmetric.Altmetric import Altmetric
 from model.AllResponses import AllResponses
 from model.Status import Status
@@ -38,26 +38,26 @@ def data_collection_execution(query_id):
                   str(idx / status.total * 100) + '%')
 
             # retrieve data from scopus
-            try:
-                scopus_abstract = scopus.ScopusAbstract(eid, view="FULL")
-            except IOError:
-                missed_eids.append(eid)
-                continue
+            # try:
+            scopus_abstract = scopus.AbstractRetrieval(identifier=eid, id_type='eid', view="FULL", refresh=True)
+            # except IOError:
+             #   print('could not collect data for EID ' + eid)
+             #   missed_eids.append(eid)
+             #   continue
 
             # create new AllResponses object to hold the individual information
             response = AllResponses(eid, project['name'], project['project_id'])
 
             # add scopus abstract to AllResponses object
-            response.scopus_abtract_retrieval = scopus_abstract
-            print(dir(scopus_abstract))
+            response.scopus_abstract_retrieval = scopus_abstract
 
             # get doi and collect unpaywall data and Altmetric data
             doi = scopus_abstract.doi
             if doi is not None:
                 if doi is not "":
                     response.unpaywall_response = Unpaywall(doi)
-                    response.altmetric_response = Altmetric(doi)
-                    response.scival_data = Scival([])
+                    # response.altmetric_response = Altmetric(doi)
+                    # response.scival_data = Scival([])
 
             # send response to elastic search index
             elasticsearch_service.send_to_index(response, project['project_id'])

@@ -1,6 +1,6 @@
+import scopus
 from flask import Response, request, jsonify
 
-import scopus
 from model.Query import Query
 from model.Status import Status
 from service import project_service, query_service, status_service, eids_service, relevance_measure_service

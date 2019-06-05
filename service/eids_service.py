@@ -36,3 +36,12 @@ def load_judgement_file(project_id, prefix=''):
         project = json.load(json_file)
         json_file.close()
         return project
+
+
+def get_last_change(project_id, prefix=''):
+    with app.app_context():
+        location = app.config.get("LIBINTEL_DATA_DIR")
+    path_to_file = location + '/out/' + project_id + '/' + prefix + 'eids_list.txt'
+    lastChange = os.path.getmtime(path_to_file)
+    return lastChange
+
