@@ -28,14 +28,14 @@ def save_eid_list(project_id, eids, prefix=''):
         list_file.close()
 
 
-def load_judgement_file(project_id, prefix=''):
+def load_judgement_file(project_id):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    path_to_file = location + '/out/' + project_id + '/' + prefix + ''
+    path_to_file = location + '/out/' + project_id + '/sample_judgement_eids_list.json'
     with open(path_to_file) as json_file:
-        project = json.load(json_file)
+        judgement_list = json.load(json_file)
         json_file.close()
-        return project
+        return judgement_list
 
 
 def get_last_change(project_id, prefix=''):
