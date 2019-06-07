@@ -22,7 +22,7 @@ def save_query(project_id, query):
     out_dir = location + '/out/'
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-    with open(out_dir + project_id + '.json', 'w') as json_file:
+    with open(out_dir + project_id + 'query.json', 'w') as json_file:
         json_file.write(json_string)
 
 
