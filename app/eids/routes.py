@@ -196,8 +196,8 @@ def upload_sample_judgement_file(query_id):
     path_to_save = location + '/out/' + query_id + '/'
     if not os.path.exists(path_to_save):
         os.makedirs(path_to_save)
-    file.save(path_to_save + 'sample_judgement_eids_list.json')
-    project['isTestdata'] = True
+    file.save(path_to_save + 'sample_judgement_eids_list.csv')
+    project['isSampledata'] = True
     project_service.save_project(project)
     return Response('list saved', status=204)
 
