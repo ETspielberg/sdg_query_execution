@@ -27,7 +27,7 @@ def download_eids(query_id):
     try:
         return send_file(path_to_file, attachment_filename='eids_list.txt')
     except FileNotFoundError:
-        return Response('no list of missed eids', status=404)
+        return Response('no list of eids', status=404)
 
 
 # download the file with the missed EIDs from the search, stored in the working directory as missed_eids_list.txt
