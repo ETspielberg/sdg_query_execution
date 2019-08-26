@@ -5,8 +5,8 @@ import json
 import os
 import random
 
-import scopus
 from flask import send_file, Response, request, jsonify
+from pybliometrics import scopus
 
 from model.RelevanceMeasures import RelevanceMeasure
 import utilities.utils as utils
@@ -83,9 +83,7 @@ def retrieve_sampled_publications(query_id):
         random_sample_eids = eids
     search_string = utils.generate_scopus_search_from_eid_list(random_sample_eids)
     search = scopus.ScopusSearch(search_string, refresh=True, query_id=query_id)
-    print(search)
     sample_publications_json = json.dumps(search.results, cls=PropertyEncoder)
-    print(sample_publications_json)
     return Response(sample_publications_json, status=200, mimetype='application/json')
 
 
