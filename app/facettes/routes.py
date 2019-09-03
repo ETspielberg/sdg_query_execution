@@ -23,11 +23,11 @@ def upload_facettes_file(query_id):
 
 
 @cross_origin('*')
-@facettes_blueprint.route('/keyword_list/<query_id>')
-def retrieve_keyword_facettes_list(query_id):
+@facettes_blueprint.route('/journal_list/<query_id>')
+def retrieve_journal_facettes_list(query_id):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    keyword_facettes = []
+    journal_facettes = []
     with open(location + '/out/' + query_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
@@ -40,20 +40,20 @@ def retrieve_keyword_facettes_list(query_id):
             if row[12] == '':
                  continue
 
-        keyword_facettes.append({
+        journal_facettes.append({
                 'journal': row[12],
                 'count': int(row[13])
             })
         csvfile.close()
-    return jsonify(keyword_facettes)
+    return jsonify(journal_facettes)
 
 
 @cross_origin('*')
-@facettes_blueprint.route('/journal_list/<query_id>')
-def retrieve_journal_facettes_list(query_id):
+@facettes_blueprint.route('/keyword_list/<query_id>')
+def retrieve_keyword_facettes_list(query_id):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    journal_facettes = []
+    keyword_facettes = []
     with open(location + '/out/' + query_id + '/' + 'journal_facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
@@ -67,9 +67,9 @@ def retrieve_journal_facettes_list(query_id):
             # skip empty data
             if row[14] == '':
                 continue
-            journal_facettes.append({
+            keyword_facettes.append({
                 'journal': row[14],
                 'count': int(row[15])
             })
         csvfile.close()
-    return jsonify(journal_facettes)
+    return jsonify(keyword_facettes)
