@@ -28,7 +28,7 @@ def retrieve_keyword_facettes_list(query_id):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     keyword_facettes = []
-    with open(location + '/out/' + query_id + '/' + 'facettes.csv', 'r') as csvfile:
+    with open(location + '/out/' + query_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
             if row.__len__() < 16:
@@ -47,7 +47,7 @@ def retrieve_journal_facettes_list(query_id):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     journal_facettes = []
-    with open(location + '/out/' + query_id + '/' + 'journal_facettes.csv', 'r') as csvfile:
+    with open(location + '/out/' + query_id + '/' + 'journal_facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
             if row.__len__() < 16:
