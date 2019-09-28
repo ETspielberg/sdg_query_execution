@@ -1,26 +1,26 @@
 import json
 import os
 
-from elasticsearch import Elasticsearch
 from flask import current_app as app
 
-es = Elasticsearch()
 
-def load_project(query_id):
-    return es.get(index='projects', doc_type='project', id=query_id)['_source']
-
-
-def get_all_projects():
-    projects = []
-    search_result = es.search(index='projects', doc_type="project")['hits']['hits']
-    for project_source in search_result:
-        projects.append(project_source['_source'])
-    return projects
+def load_project(project_id):
+    with app.app_context():
+        location = app.config.get("LIBINTEL_DATA_DIR")
+    path_to_file = location + '/out/' + project_id + '.json'
+    with open(path_to_file) as json_file:
+        project = json.load(json_file)
+        json_file.close()
+        return project
 
 
 def save_project(project):
-    try:
-        res = es.index(index='projects', doc_type="project", id=project['project_id'], body=json.dumps(project))
-        return res
-    except:
-        print('could not send scival update')
+    with app.app_context():
+        location = app.config.get("LIBINTEL_DATA_DIR")
+    json_string = json.dumps(project)
+    out_dir = location + '/out/'
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
+    with open(out_dir + project['project_id'] + '.json', 'w') as json_file:
+        json_file.write(json_string)
+

@@ -7,8 +7,8 @@ class SurveyResult:
         self._unselected_keywords = []
         self._selected_keywords = []
         self._session = ''
-        self._suggested_keywords = ''
-        self._suggested_journals = ''
+        self._suggested_keywords = []
+        self._suggested_journals = []
         if row is not None:
             self._session = row[9]
             for i in range(29, 128):
@@ -18,8 +18,8 @@ class SurveyResult:
                     self._unselected_keywords.append(i - 226)
                 else:
                     self._selected_keywords.append(i - 226)
-            self._suggested_keywords = row[328]
-            self._suggested_journals = row[435]
+            self._suggested_keywords = row[328].split('\n')
+            self._suggested_journals = row[435].split('\n')
             for i in range(334, 433):
                 if row[i] is '':
                     self._unselected_journals.append(i - 333)

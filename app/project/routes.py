@@ -10,7 +10,20 @@ from . import project_blueprint
 
 @project_blueprint.route("/all", methods=['GET'])
 def list_projects():
-    projects = project_service.get_all_projects()
+    with app.app_context():
+        location = app.config.get("LIBINTEL_DATA_DIR")
+    projects = []
+    list_filenames = os.listdir(location + '/out/')
+    for filename in list_filenames:
+        if filename.endswith('.json'):
+            path_to_file = location + '/out/' + filename
+            try:
+                with open(path_to_file) as json_file:
+                    project = json.load(json_file)
+                    json_file.close()
+                    projects.append(project)
+            except FileNotFoundError:
+                continue
     return jsonify(projects)
 
 
