@@ -1,3 +1,7 @@
+################
+#    imports   #
+################
+
 from flask import request
 
 from app.crossref import crossref_blueprint
@@ -8,8 +12,12 @@ from pybliometrics import scopus
 from crossref.CrossRefSearch import CrossRefSearch
 
 
-@crossref_blueprint.route('/titles2dois/<query_id>', methods=['POST'])
-def titles_to_dois(query_id):
+################
+#    routes    #
+################
+
+@crossref_blueprint.route('/titles2dois/<project_id>', methods=['POST'])
+def titles_to_dois(project_id):
     n_crossref = 0
     n_scopus = 0
     delimiter = ";"
@@ -17,7 +25,7 @@ def titles_to_dois(query_id):
     filename = request.form['filename']
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    file_folder = location + '/out/' + query_id + '/'
+    file_folder = location + '/out/' + project_id + '/'
     file = open(file_folder + filename, "r", encoding="utf-8")
     file_output = open(file_folder + filename.replace(".txt", ".out"), 'w', encoding="utf-8")
     file_data = open(file_folder + filename.replace(".txt", ".data"), 'w', encoding="utf-8")

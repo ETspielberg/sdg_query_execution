@@ -1,3 +1,7 @@
+################
+#    imports   #
+################
+
 import json
 
 import numpy as np
@@ -13,9 +17,13 @@ from . import analysis_blueprint
 es = Elasticsearch()
 
 
-@analysis_blueprint.route('/prepare_abstracts/<query_id>', methods=['POST'])
-def count_keywords(query_id):
-    project = project_service.load_project(query_id)
+################
+#    routes    #
+################
+
+@analysis_blueprint.route('/prepare_abstracts/<project_id>', methods=['POST'])
+def count_keywords(project_id):
+    project = project_service.load_project(project_id)
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     out_dir = location + '/out/' + project['project_id'] + '/'
@@ -31,9 +39,9 @@ def count_keywords(query_id):
     return Response({"status": "FINISHED"}, status=204)
 
 
-# @app.route("/calculateTextrank/<query_id>")
-# def calculate_text_rank(query_id):
-#     path_to_file = location + '/out/' + query_id + '/abstracts.json'
+# @app.route("/calculateTextrank/<project_id>")
+# def calculate_text_rank(project_id):
+#     path_to_file = location + '/out/' + project_id + '/abstracts.json'
 #     for graf in pytextrank.parse_doc(pytextrank.json_iter(path_to_file)):
 #         print(pytextrank.pretty_print(graf))
 #     return "ok"

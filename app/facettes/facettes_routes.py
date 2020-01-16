@@ -1,3 +1,7 @@
+#################
+#    imports    #
+#################
+
 import os
 import csv
 
@@ -9,14 +13,18 @@ from . import facettes_blueprint
 from flask import current_app as app
 
 
-# uploads the test data and saves it as test_data.csv in the working directory
-@facettes_blueprint.route('/upload/<query_id>', methods=['POST'])
-def upload_facettes_file(query_id):
+#################
+#    routes     #
+#################
+
+@facettes_blueprint.route('/upload/<project_id>', methods=['POST'])
+def upload_facettes_file(project_id):
+    """uploads the test data and saves it as test_data.csv in the working directory"""
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    print("saving facettes file for " + query_id)
+    print("saving facettes file for " + project_id)
     file = request.files['facettes']
-    path_to_save = location + '/out/' + query_id + '/'
+    path_to_save = location + '/out/' + project_id + '/'
     if not os.path.exists(path_to_save):
         os.makedirs(path_to_save)
     file.save(path_to_save + 'facettes.csv')
@@ -24,13 +32,14 @@ def upload_facettes_file(query_id):
 
 
 @cross_origin('*')
-@facettes_blueprint.route('/journal_list/<query_id>')
-def retrieve_journal_facettes_list(query_id):
+@facettes_blueprint.route('/journal_list/<project_id>')
+def retrieve_journal_facettes_list(project_id):
+    """loads the list of top journals from the facettes file."""
     sample_size = int(request.args.get('sample_size'))
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     journal_facettes = []
-    with open(location + '/out/' + query_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
+    with open(location + '/out/' + project_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
             if row.__len__() < 16:
@@ -44,32 +53,31 @@ def retrieve_journal_facettes_list(query_id):
             if row[13] == '':
                 continue
 
-            journal_facettes.append({
-                'journal': row[12],
-                'count': int(row[13])
-            })
+            journal_facettes.append({'journal': row[12], 'count': int(row[13])})
         csvfile.close()
-    with open(location + '/out/' + query_id + '/' + 'journal_facettes.txt', 'w', encoding='utf-8') as facettes_file:
+    with open(location + '/out/' + project_id + '/' + 'journal_facettes.txt', 'w', encoding='utf-8') as facettes_file:
         for journal_facette in journal_facettes:
             facettes_file.write(journal_facette['journal'] + '\n')
         facettes_file.close()
     return jsonify(journal_facettes[:sample_size])
 
 
-@facettes_blueprint.route('/generate_lists/<query_id>', methods=['POST'])
-def generate_lists(query_id):
-    facettes_service.generate_lists(query_id);
+@facettes_blueprint.route('/generate_lists/<project_id>', methods=['POST'])
+def generate_lists(project_id):
+    """lgenerates the list of top journals and top keywords from the facettes file."""
+    facettes_service.generate_lists(project_id)
     return Response('list files generated', status=204)
 
 
 @cross_origin('*')
-@facettes_blueprint.route('/keyword_list/<query_id>')
-def retrieve_keyword_facettes_list(query_id):
+@facettes_blueprint.route('/keyword_list/<project_id>')
+def retrieve_keyword_facettes_list(project_id):
+    """loads the list of top keywords from the facettes file."""
     sample_size = int(request.args.get('sample_size'))
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     keyword_facettes = []
-    with open(location + '/out/' + query_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
+    with open(location + '/out/' + project_id + '/' + 'facettes.csv', 'r', encoding='utf-8-sig') as csvfile:
         linereader = csv.reader(csvfile, delimiter=',')
         for row in linereader:
             # skip first lines
@@ -89,7 +97,7 @@ def retrieve_keyword_facettes_list(query_id):
                 'count': int(row[15])
             })
         csvfile.close()
-    with open(location + '/out/' + query_id + '/' + 'keyword_facettes.txt', 'w', encoding='utf-8') as facettes_file:
+    with open(location + '/out/' + project_id + '/' + 'keyword_facettes.txt', 'w', encoding='utf-8') as facettes_file:
         for keyword_facette in keyword_facettes:
             facettes_file.write(keyword_facette['keyword'] + '\n')
         facettes_file.close()
