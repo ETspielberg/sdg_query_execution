@@ -29,6 +29,11 @@ from service.elasticsearch_service import HiddenEncoder
 @cross_origin('localhost:4200')
 @survey_analyzer_blueprint.route('/upload/<project_id>', methods=['POST'])
 def upload_results_file(project_id):
+    """
+    retrieves a file from the request and saves it as survey_results.csv to disc
+    :param project_id:
+    :return:
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     print("saving survey results file for " + project_id)
@@ -44,6 +49,11 @@ def upload_results_file(project_id):
 
 @survey_analyzer_blueprint.route('/stats/<survey_id>', methods=['GET'])
 def get_stats_for_survey(survey_id):
+    """
+    returns the general statistics for the survey.
+    :param survey_id: the ID of the survey
+    :return: a JSON formatted SurveyStats object
+    """
     print('collecting survey stats for survey id' + survey_id)
     survey_stats = SurveyGizmoSurveyStats(survey_id)
     print(survey_stats.cities_frequencies   )
@@ -52,6 +62,11 @@ def get_stats_for_survey(survey_id):
 
 @survey_analyzer_blueprint.route('/import/<project_id>', methods=['GET'])
 def import_survey_results_data(project_id):
+    """
+    imports the survey responses from the survey_results.csv file
+    :param project_id: the ID of the current project
+    :return: a JSON formatted SurveyResult object
+    """
     print('importing survey results')
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
@@ -85,6 +100,11 @@ def import_survey_results_data(project_id):
 
 @survey_analyzer_blueprint.route('/collect/<project_id>', methods=['GET'])
 def collect_survey_results_data(project_id):
+    """
+    queries the SurveyGizmo API to collect the data for a given survey
+    :param project_id: the ID of the current project
+    :return: a JSON formatted list of SurveyGizmo survey results
+    """
     survey_id = request.args.get('survey_id')
     project = project_service.load_project(project_id)
     print('collecting survey results for survey id {}'.format(survey_id))

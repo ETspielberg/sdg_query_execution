@@ -23,6 +23,11 @@ es = Elasticsearch()
 
 @analysis_blueprint.route('/prepare_abstracts/<project_id>', methods=['POST'])
 def count_keywords(project_id):
+    """
+    returns a list of abstracts contained in the project
+    :param project_id: the ID of the current project
+    :return: a JSON formatted list of the abstracts
+    """
     project = project_service.load_project(project_id)
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
@@ -48,6 +53,11 @@ def count_keywords(project_id):
 
 @analysis_blueprint.route('/analysis/overlap', methods=['GET'])
 def calculate_overlap():
+    """
+    calculates the overlap between two query. The indivudial query IDs are provided as path variables 'primary' and
+    'secondary
+    :return: Response status 200 if the calculation succeeded.
+    """
     print('calculating overview')
     list_ids = request.args.getlist('primary')
     second_list = request.args.getlist('secondary')

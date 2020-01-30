@@ -26,7 +26,8 @@ from . import collector_blueprint
 
 @collector_blueprint.route('/collect_data/<project_id>', methods=['POST'])
 def data_collection_execution(project_id):
-    """run the data collection
+    """
+    run the data collection
 
     :parameter project_id the id of the current project
 

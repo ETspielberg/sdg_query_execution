@@ -24,6 +24,11 @@ from flask import current_app as app
 # download the file with the EIDs from the search, stored in the working directory as eids_list.txt
 @eids_blueprint.route("/all/<project_id>", methods=['GET'])
 def download_eids(project_id):
+    """
+    download the complete list of EIDs
+    :param project_id: the ID of the current project
+    :return: a txt file containing the EIDs
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     # path to the file
@@ -38,6 +43,11 @@ def download_eids(project_id):
 # download the file with the missed EIDs from the search, stored in the working directory as missed_eids_list.txt
 @eids_blueprint.route("/missed/<project_id>", methods=['GET'])
 def download_missed_eids(project_id):
+    """
+    download the list of missed EIDs
+    :param project_id: the ID of the current project
+    :return: a txt file containing the EIDs wfor which no full records could be collected
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     # path to the file

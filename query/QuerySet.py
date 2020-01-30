@@ -1,4 +1,5 @@
 class QuerySet:
+    """A container element to hold a list of query objects."""
 
     @property
     def queries(self):

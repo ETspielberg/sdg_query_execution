@@ -20,6 +20,11 @@ from flask import jsonify, Response, request
 # returns true if the scival_data.csv file is present for the iven project
 @scival_blueprint.route("/check/<project_id>")
 def check_scival(project_id):
+    """
+    checks whether scival data have been uploaded
+    :param project_id: the ID of the current project
+    :return: True, if scival data have been uploaded.
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     path_to_file = location + '/out/' + project_id + '/scival_data.csv'
@@ -29,6 +34,11 @@ def check_scival(project_id):
 # uploads the scival data and saves it as scival_data.csv in the working directory
 @scival_blueprint.route('/single/<project_id>', methods=['POST'])
 def upload_scival_file(project_id):
+    """
+    retrieves the scival file from the request and saves it to disc
+    :param project_id: the ID of the current project
+    :return: returns a status of 204 when the file could be saved
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     print("saving scival file for " + project_id)
@@ -49,6 +59,11 @@ def upload_scival_file(project_id):
 # reads in the scival data and uses the results to update the elasticsearch index
 @scival_blueprint.route('/import/<project_id>', methods=['GET'])
 def import_scival_data(project_id):
+    """
+    imports the scival data into the data store
+    :param project_id: the ID of the current project
+    :return: a status of 200 when the data have been imported
+    """
     print('importing Scival data')
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
@@ -62,4 +77,4 @@ def import_scival_data(project_id):
             elasticsearch_service.append_to_index(ScivalUpdate(scival), scival.eid, project_id)
             scivals.append(scival)
         csvfile.close()
-    return "imported " + str(scivals.__len__()) + " Scival data"
+    return Response("imported " + str(scivals.__len__()) + " Scival data", status=200)

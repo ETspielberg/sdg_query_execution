@@ -32,7 +32,7 @@
                     </div>
                 </div>
                 <div class="container">
-                        <xsl:apply-templates select="aqd:query"/>
+                    <xsl:apply-templates select="aqd:query"/>
                 </div>
             </body>
         </html>
@@ -66,7 +66,21 @@
                 </tr>
             </thead>
             <tbody>
-                <xsl:apply-templates select="aqd:query-definition"/>
+                <tr>
+                    <td/>
+                    <td/>
+                    <td>
+                        (
+                    </td>
+                </tr>
+                <xsl:apply-templates select="aqd:query-definition" mode="table"/>
+                <tr>
+                    <td/>
+                    <td/>
+                    <td>
+                        )
+                    </td>
+                </tr>
                 <tr>
                     <td></td>
                     <td>Filter:</td>
@@ -76,9 +90,14 @@
                 </tr>
             </tbody>
         </table>
+
+        <div>
+            (<xsl:apply-templates select="aqd:query-definition" mode="query"/>)
+            <xsl:apply-templates select="aqd:filters"/>
+        </div>
     </xsl:template>
 
-    <xsl:template match="aqd:query-definition">
+    <xsl:template match="aqd:query-definition" mode="table">
         <tr>
             <td>
                 <xsl:value-of select="../../dc:identifier"/>.
@@ -88,15 +107,29 @@
                 <xsl:apply-templates select="aqd:subquery-descriptions"/>
             </td>
             <td>
-                <xsl:if test="position() = 1">(</xsl:if>
+                <xsl:if test="count(aqd:query-lines/aqd:query-line) > 0">
+                    <xsl:if test="aqd:query-lines/aqd:query-line/. != ''">
+                        <xsl:if test="position() != 1">
+                            <xsl:text>OR</xsl:text>
+                        </xsl:if>
+                        <xsl:apply-templates select="aqd:query-lines"/>
+                        <xsl:apply-templates select="aqd:filters"/>
+                    </xsl:if>
+                </xsl:if>
+            </td>
+        </tr>
+    </xsl:template>
+
+    <xsl:template match="aqd:query-definition" mode="query">
+        <xsl:if test="count(aqd:query-lines/aqd:query-line) > 0">
+            <xsl:if test="aqd:query-lines/aqd:query-line/. != ''">
                 <xsl:if test="position() != 1">
                     <xsl:text>OR</xsl:text>
                 </xsl:if>
                 <xsl:apply-templates select="aqd:query-lines"/>
                 <xsl:apply-templates select="aqd:filters"/>
-                <xsl:if test="position() = last()">)</xsl:if>
-            </td>
-        </tr>
+            </xsl:if>
+        </xsl:if>
     </xsl:template>
 
     <xsl:template match="aqd:subquery-descriptions">
@@ -110,52 +143,65 @@
     </xsl:template>
 
     <xsl:template match="aqd:query-lines">
-        <xsl:if test="@field">
-            <xsl:value-of select="@field"/>(
-        </xsl:if>
-        <xsl:apply-templates select="aqd:query-line"/>
-        <xsl:if test="@field">
-            )
-        </xsl:if>
+        <font face="arial,helvetica">
+            <xsl:if test="@field">
+                <xsl:value-of select="@field"/>(
+            </xsl:if>
+            <xsl:apply-templates select="aqd:query-line"/>
+            <xsl:if test="@field">
+                )
+            </xsl:if>
+        </font>
     </xsl:template>
 
     <xsl:template match="aqd:query-line">
         <p>
-            <xsl:if test="@field">
-                <xsl:value-of select="@field"/>
-            </xsl:if>
-            (<xsl:value-of select="."/>)
-            <xsl:if test="position() != last()">
-                <xsl:text>OR</xsl:text>
-                <xsl:text>&#xa;</xsl:text>
-            </xsl:if>
+            <font face="arial,helvetica">
+                <xsl:if test="@field">
+                    <xsl:value-of select="@field"/>
+                </xsl:if>
+                (<xsl:value-of select="."/>)
+                <xsl:if test="position() != last()">
+                    <xsl:text> OR </xsl:text>
+                    <xsl:text>&#xa;</xsl:text>
+                </xsl:if>
+            </font>
         </p>
     </xsl:template>
 
     <xsl:template match="aqd:filters">
         <xsl:if test="aqd:timerange">
             <p>
-                (
-                <xsl:value-of select="aqd:timerange/@field"/>
-                &gt;
-                <xsl:value-of select="aqd:timerange/aqd:start/."/>
-                AND
-                <xsl:value-of select="@field"/>
-                &lt;
-                <xsl:value-of select="aqd:timerange/aqd:end/."/>
-                )
+                <font face="arial,helvetica">
+                     AND (
+                    <xsl:value-of select="aqd:timerange/@field"/>
+                    &gt;
+                    <xsl:value-of select="aqd:timerange/aqd:start/."/>
+                     AND
+                    <xsl:value-of select="aqd:timerange/@field"/>
+                    &lt;
+                    <xsl:value-of select="aqd:timerange/aqd:end/."/>
+                    )
+                </font>
             </p>
-        </xsl:if><xsl:if test="aqd:filter">
-            <xsl:if test="position() != last()">
-                 AND
+        </xsl:if>
+        <xsl:if test="aqd:filter">
+            <xsl:if test="aqd:filter !=''">
+                <font face="arial,helvetica">
+                    <xsl:if test="position() != last()">
+                        AND
+                    </xsl:if>
+                    <p>
+                        (<xsl:apply-templates select="aqd:filter"/>)
+                    </p>
+                </font>
             </xsl:if>
-            <p>
-               <xsl:apply-templates select="aqd:filter" />
-            </p>
         </xsl:if>
     </xsl:template>
 
     <xsl:template match="aqd:filter">
-        <xsl:value-of select="@field" />=(<xsl:value-of select="." />)
+        <font face="arial,helvetica">
+            <xsl:value-of select="@field"/>(<xsl:value-of select="."/>)
+        </font>
     </xsl:template>
 </xsl:stylesheet>

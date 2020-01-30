@@ -1,11 +1,9 @@
-from dateutil.utils import today
-
-from query.QueryDefintion import QueryDefinition
+from datetime import date
 
 
 class Query:
-    """The main definition object of a query. Contains information about the creator, contributors, the query defintions
-     and the applied filters."""
+    """The main definition object of a query. Contains information about the creator, contributors, the query
+    definitions and the applied filters."""
 
     @property
     def identifier(self):
@@ -57,7 +55,7 @@ class Query:
                  contributor='',
                  licence='CC-BY v4 INT',
                  licence_href='http://creativecommons.org/licenses/by/4.0/',
-                 date_modified=""
+                 date_modified=str(date.today())
                  ):
         self._creator = creator
         self._contributor = contributor
@@ -69,7 +67,7 @@ class Query:
         self._title = title
         self._identifier = identifier
         self._description = description
-        self._date_modified = ""
+        self._date_modified = str(date.today())
         self._licence = licence
         self._licence_href = licence_href
         self._date_modified = date_modified

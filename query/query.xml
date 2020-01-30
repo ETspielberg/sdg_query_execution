@@ -1,5 +1,5 @@
 <aqd:query xmlns:aqd="http://aurora-network.global/queries/namespace/"
-           xmlns:dc="http://dublincore.org/documents/dcmi-namespace/">
+           xmlns:dc="https://www.dublincore.org/schemas/xmls/qdc/dcterms.xsd">
     <dc:identifier>2</dc:identifier>
     <dc:title>SDG-02 zero hunger</dc:title>
     <dc:creator>...</dc:creator>

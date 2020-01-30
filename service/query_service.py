@@ -34,10 +34,27 @@ def import_old_query(project_id):
 
 
 def convert(query_old):
-    query = Query()
-    query.title = query_old['title']
-    affiliation_filter = QueryFilter(field='AF-ID', )
-    query.query_definitions.query_filters
+    timerange = Timerange(start=query_old['start_year'], end=query_old['end_year'], field='PUBYEAR')
+    query_filters = QueryFilters(timerange=timerange)
+    if query_old['affiliation_id'] != '':
+        affiliation_filter = QueryFilter(filter_field='AF-ID', filter_term=query_old['affiliation_id'],
+                                         filter_type='affiliation')
+        query_filters.add_filter(affiliation_filter)
+
+    if query_old['author_name'] != '':
+        person_name_filter = QueryFilter(filter_field='AUTH', filter_term=query_old['author_name'])
+        query_filters.add_filter(person_name_filter)
+    if query_old['subject'] != '':
+        subject_filter = QueryFilter(filter_field='SUBJAREA', filter_term=query_old['subject'])
+        query_filters.add_filter(subject_filter)
+
+    query_lines = [QueryLine(field='TITLE-ABS-KEY', query_line=query_old['topic'])]
+    if query_old['author_id'] != '':
+        person_id_search = QueryLine(field='AU-ID', query_line=query_old['author_id'])
+        query_lines.append(person_id_search)
+    query_definition = QueryDefinition(query_lines=query_lines, identifier='1')
+    query_definitions = QueryDefintions(query_filters=query_filters, query_definition=[query_definition])
+    query = Query(title=query_old['title'], query_definitions=query_definitions)
     return query
 
 
@@ -65,8 +82,8 @@ def load_scopus_queries(project_id):
 
 
 def load_scopus_query_from_xml(project_id):
-    queries = load_query_from_xml(project_id)
-    query_converter = QueryConverter(queries.queries[0])
+    query = load_query_from_xml(project_id)
+    query_converter = QueryConverter(query)
     query_converter.calculate_scopus_queries()
     return query_converter.calculate_scopus_queries()
 
@@ -246,7 +263,10 @@ def save_query_to_xml(project_id, query):
     save_scopus_queries(project_id, query_converter.scopus_queries)
 
 
-def filter_from_json(json):
+def filter_from_json(json, old_query=False):
+
+    if (old_query):
+        return convert(json)
     try:
         timerange = Timerange(field=json['timerange']['field'],
                               start=json['timerange']['start'],
@@ -295,7 +315,6 @@ def from_json(json):
                 QueryLine(field=query_line['field'], query_line=query_line['query_line']))
         query_definitions.add_query_definition(query_definition_object)
     query.query_definitions = query_definitions
-
     return query
 
 

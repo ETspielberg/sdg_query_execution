@@ -18,6 +18,11 @@ from crossref.CrossRefSearch import CrossRefSearch
 
 @crossref_blueprint.route('/titles2dois/<project_id>', methods=['POST'])
 def titles_to_dois(project_id):
+    """
+    takes lines of citations from a file, and queries the crossref API for a doi.
+    :param project_id:
+    :return: 'finished' when all entries have been processed.
+    """
     n_crossref = 0
     n_scopus = 0
     delimiter = ";"

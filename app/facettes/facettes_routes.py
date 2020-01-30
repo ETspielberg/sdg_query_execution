@@ -19,7 +19,11 @@ from flask import current_app as app
 
 @facettes_blueprint.route('/upload/<project_id>', methods=['POST'])
 def upload_facettes_file(project_id):
-    """uploads the test data and saves it as test_data.csv in the working directory"""
+    """
+    uploads the test data and saves it as test_data.csv in the working directory
+    :param project_id: the ID of the current project
+    :return: returns 204 if the file was saved successfully
+    """
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     print("saving facettes file for " + project_id)
@@ -27,15 +31,24 @@ def upload_facettes_file(project_id):
     path_to_save = location + '/out/' + project_id + '/'
     if not os.path.exists(path_to_save):
         os.makedirs(path_to_save)
-    file.save(path_to_save + 'facettes.csv')
-    return Response('facettes saved', status=204)
+    try:
+        file.save(path_to_save + 'facettes.csv')
+        return Response('facettes saved', status=204)
+    except IOError:
+        return Response('could not write file', status=500)
 
 
 @cross_origin('*')
 @facettes_blueprint.route('/journal_list/<project_id>')
 def retrieve_journal_facettes_list(project_id):
-    """loads the list of top journals from the facettes file."""
-    sample_size = int(request.args.get('sample_size'))
+    """
+    loads the list of top journals from the facettes file. the number of top journals is given as path parameter
+    'sample-size', default is 20.
+    :param project_id: the ID of the current project
+    :return: a list of journals with the given sample size
+    """
+
+    sample_size = int(request.args.get('sample_size', default='20'))
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     journal_facettes = []
@@ -64,16 +77,28 @@ def retrieve_journal_facettes_list(project_id):
 
 @facettes_blueprint.route('/generate_lists/<project_id>', methods=['POST'])
 def generate_lists(project_id):
-    """lgenerates the list of top journals and top keywords from the facettes file."""
-    facettes_service.generate_lists(project_id)
-    return Response('list files generated', status=204)
+    """
+    generates the list of top journals and top keywords from the facettes file.
+    :param project_id: the ID of the current project
+    :return: returns a 204, if the file was created successfully.
+    """
+    try:
+        facettes_service.generate_lists(project_id)
+        return Response('list files generated', status=204)
+    except IOError:
+        return Response('could not write file', status=500)
 
 
 @cross_origin('*')
 @facettes_blueprint.route('/keyword_list/<project_id>')
 def retrieve_keyword_facettes_list(project_id):
-    """loads the list of top keywords from the facettes file."""
-    sample_size = int(request.args.get('sample_size'))
+    """
+    loads the list of top keywords from the facettes file. the number of top keywords is given as path parameter
+    'sample-size', default is 20.
+    :param project_id: the ID of the current project
+    :return: a list of keywords of the given sample size
+    """
+    sample_size = int(request.args.get('sample_size', default='20'))
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     keyword_facettes = []

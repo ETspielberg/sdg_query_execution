@@ -7,7 +7,7 @@ import json
 from model.RelevanceMeasures import RelevanceMeasure
 from service import eids_service, relevance_measure_service
 from . import relevance_measures_blueprint
-from flask import current_app as app, jsonify, Response
+from flask import jsonify, Response
 
 
 ################
@@ -17,6 +17,12 @@ from flask import current_app as app, jsonify, Response
 # check the provided test EIDs vs the obtained result set
 @relevance_measures_blueprint.route("/relevanceMeasures/getRecall/<query_id>", methods=['GET'])
 def check_test_eids(query_id):
+    """
+    calcluates the Recall by comparing the list of EIDs retrieved from the query against lists of EIDs as obtained from
+     the survey
+    :param query_id: the ID of the current project
+    :return: a JSON formatted relevance measure object.
+    """
     test_eids = eids_service.load_eid_list(query_id, 'test_')
 
     # load collected eids
@@ -37,9 +43,15 @@ def check_test_eids(query_id):
     relevance_measure_service.save_relevance_measures(query_id, relevance_measure)
     return jsonify(relevance_measure)
 
+
 # reads the relavance measures file (relevance_measures.json) and returns it.
 @relevance_measures_blueprint.route("/relevanceMeasures/single/<query_id>")
 def get_relevance_measures(query_id):
+    """
+
+    :param query_id:
+    :return:
+    """
     try:
         relevance_measure = relevance_measure_service.load_relevance_measure(query_id)
         return json.dumps(relevance_measure, default=lambda o: o.__getstate__())

@@ -18,17 +18,20 @@ es = Elasticsearch()
 
 @keywords_blueprint.route("/collect/<project_id>")
 def get_keywords(project_id):
-    """retrieve the list of keywords for the search"""
+    """
+    retrieve the list of keywords for the search
+    :param project_id: the ID of the current project
+    :return:
+    """
     try:
         search = es.search(index=project_id, doc_type='all_data', size=1000, scroll='3m')
     except IOError:
         return Response('no keywords ', status=404)
     sid = search['_scroll_id']
     scroll_size = search['hits']['total']
-    fields = {}
-    fields['abstract'] = None
+    fields = {'abstract': None}
     append_results_to_fields(fields, search)
-    while (scroll_size > 0):
+    while scroll_size > 0:
         page = es.scroll(scroll_id=sid, scroll='3m')
         sid = page['_scroll_id']
         scroll_size = len(page['hits']['hits'])
