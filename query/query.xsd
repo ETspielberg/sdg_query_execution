@@ -26,7 +26,14 @@
     <xs:element name="query">
         <xs:complexType>
             <xs:sequence>
-                <xs:group ref="dc:elementsAndRefinementsGroup"/>
+                <xs:element ref="dc:title"/>
+                <xs:element ref="dc:creator"/>
+                <xs:element ref="dc:subject"/>
+                <xs:element ref="dc:description"/>
+                <xs:element ref="dc:contributor"/>
+                <xs:element ref="dc:date"/>
+                <xs:element ref="dc:identifier"/>
+                <xs:element ref="dc:rights"/>
                 <xs:element name="query-definitions" type="aqd:QueryDefintionsType"/>
             </xs:sequence>
         </xs:complexType>
