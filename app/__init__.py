@@ -11,15 +11,13 @@ def create_app(config_filename=None):
     # read the environment parameter to retrieve the path to the configuration file
     if config_filename is None:
         app.config.from_envvar("LIBINTEL_SETTINGS")
-    print(app.config, flush=True)
     # check whether the query executor is part of a microservice architecture.
     # If it is, the configuration property 'EUREKA_URL' needs to be set.
-    print(app.config.get("EUREKA_URL"), flush=True)
     if app.config.get("EUREKA_URL") is not None:
         print('registering with eureka server', flush=True)
         server_url = app.config.get("EUREKA_URL")
         server_port = app.config.get("EUREKA_PORT")
-        instance_port = app.config.from_envvar("BIBLIOMETRICS_PORT", 5000)
+        instance_port = app.config.from_envvar("BIBLIOMETRICS_PORT")
         eureka_client.init(eureka_server=server_url, app_name="query_executor",
                                            instance_port=instance_port)
 
