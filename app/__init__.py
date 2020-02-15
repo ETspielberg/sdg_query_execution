@@ -13,21 +13,21 @@ def create_app(config_filename=None):
         app.config.from_envvar("LIBINTEL_SETTINGS")
     # check whether the query executor is part of a microservice architecture.
     # If it is, the configuration property 'EUREKA_URL' needs to be set.
-    print(app.config.get("EUREKA_URL"))
+    print(app.config.get("EUREKA_URL"), flush=True)
     if app.config.get("EUREKA_URL") is not None:
-        print('registering with eureka server')
+        print('registering with eureka server', flush=True)
         server_url = app.config.get("EUREKA_URL")
         server_port = app.config.get("EUREKA_PORT")
         instance_port = app.config.from_envvar("BIBLIOMETRICS_PORT", 5000)
         eureka_client.init(eureka_server=server_url, app_name="query_executor",
                                            instance_port=instance_port)
 
-    print('enabling CORS support')
+    print('enabling CORS support', flush=True)
     # enable CORS support
     CORS(app)
 
     # register all blueprints
-    print('registering blueprints')
+    print('registering blueprints', flush=True)
     register_blueprints(app)
     base_location = app.config.get("LIBINTEL_DATA_DIR")
     create_folders(base_location)
