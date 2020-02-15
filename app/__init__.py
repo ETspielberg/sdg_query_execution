@@ -11,6 +11,7 @@ def create_app(config_filename=None):
     # read the environment parameter to retrieve the path to the configuration file
     if config_filename is None:
         app.config.from_envvar("LIBINTEL_SETTINGS")
+    print(app.config, flush=True)
     # check whether the query executor is part of a microservice architecture.
     # If it is, the configuration property 'EUREKA_URL' needs to be set.
     print(app.config.get("EUREKA_URL"), flush=True)
