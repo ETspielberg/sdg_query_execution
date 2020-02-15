@@ -18,7 +18,7 @@ def create_app(config_filename=None):
         server_url = app.config.get("EUREKA_URL")
         server_port = app.config.get("EUREKA_PORT")
         instance_port = int(os.environ.get("BIBLIOMETRICS_PORT", default=5000))
-        eureka_client.init(eureka_server=server_url, app_name="query_executor",
+        eureka_client.init(eureka_server=server_url, app_name="query-execution",
                                            instance_port=instance_port)
 
     print('enabling CORS support', flush=True)
