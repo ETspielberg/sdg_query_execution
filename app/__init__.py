@@ -22,10 +22,12 @@ def create_app(config_filename=None):
         eureka_client.init(eureka_server=server_url, app_name="query_executor",
                                            instance_port=instance_port)
 
+    print('enabling CORS support')
     # enable CORS support
     CORS(app)
 
     # register all blueprints
+    print('registering blueprints')
     register_blueprints(app)
     base_location = app.config.get("LIBINTEL_DATA_DIR")
     create_folders(base_location)
