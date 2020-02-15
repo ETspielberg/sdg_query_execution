@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask_cors import CORS
 import py_eureka_client.eureka_client as eureka_client
@@ -22,8 +24,18 @@ def create_app(config_filename=None):
 
     # register all blueprints
     register_blueprints(app)
+    base_location = app.config.get("LIBINTEL_DATA_DIR")
+    create_folders(base_location)
 
     return app
+
+
+def create_folders(base_location):
+    if not os.path.exists(base_location):
+        os.makedirs(base_location)
+    project_folder = base_location + '/out/'
+    if not os.path.exists(project_folder):
+        os.makedirs(project_folder)
 
 
 def register_blueprints(app):
