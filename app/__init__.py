@@ -17,7 +17,7 @@ def create_app(config_filename=None):
         print('registering with eureka server', flush=True)
         server_url = app.config.get("EUREKA_URL")
         server_port = app.config.get("EUREKA_PORT")
-        instance_port = app.config.from_envvar("BIBLIOMETRICS_PORT")
+        instance_port = os.environ.get("BIBLIOMETRICS_PORT", default=5000)
         eureka_client.init(eureka_server=server_url, app_name="query_executor",
                                            instance_port=instance_port)
 
