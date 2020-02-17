@@ -78,6 +78,9 @@ class SurveyGizmo:
                 for datum in data:
                     city = datum['city']
                     result = datum['survey_data']
+                    country = datum['country']
+                    latitude = datum['latitude']
+                    longitude = datum['longitude']
                     session = datum['session_id']
                     try:
                         suggested_keywords = result[str(self._keyword_suggestion_number)]['answer'].split('\n')\
