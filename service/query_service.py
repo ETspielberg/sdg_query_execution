@@ -58,10 +58,10 @@ def convert(query_old):
     return query
 
 
-def save_scopus_queries(project_id, query_id, scopus_queries):
+def save_scopus_queries(project_id, scopus_queries):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
-    path_to_file = '{}/out/{}/scopus_queries.json'.format(location, project_id, query_id)
+    path_to_file = '{}/out/{}/scopus_queries.json'.format(location, project_id)
     with open(path_to_file, 'w') as scopus_queries_file:
         scopus_queries_file.write(json.dumps(scopus_queries, default=lambda o: o.__getstate__()))
         scopus_queries_file.close()
@@ -69,7 +69,7 @@ def save_scopus_queries(project_id, query_id, scopus_queries):
 
 def create_scopus_queries(project_id, query):
     query_converter = QueryConverter(query=query)
-    save_scopus_queries(project_id, query.identifier, query_converter.scopus_queries)
+    save_scopus_queries(project_id,  query_converter.scopus_queries)
 
 
 def load_scopus_queries(project_id):
@@ -78,7 +78,7 @@ def load_scopus_queries(project_id):
     path_to_file = '{}/out/{}/query.xml'.format(location, project_id)
     query = load_xml_query_from_disc(path_to_file)
     query_converter = QueryConverter(query=query)
-    save_scopus_queries(project_id, query.identifier, query_converter.scopus_queries)
+    save_scopus_queries(project_id, query_converter.scopus_queries)
     return query_converter.scopus_queries
 
 
