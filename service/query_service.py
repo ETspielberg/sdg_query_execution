@@ -8,7 +8,6 @@ import lxml.etree as etree
 
 from flask import current_app as app
 
-from model.ScopusQueries import ScopusQueries
 from query.QueryFilters import QueryFilters
 from query.Query import Query
 from query.QueryDefinitions import QueryDefinitions
@@ -62,7 +61,7 @@ def save_scopus_queries(project_id, scopus_queries):
     with app.app_context():
         location = app.config.get("LIBINTEL_DATA_DIR")
     path_to_file = '{}/out/{}/scopus_queries.json'.format(location, project_id)
-    with open(path_to_file, 'w') as scopus_queries_file:
+    with open(path_to_file, 'w', encoding='utf-8') as scopus_queries_file:
         scopus_queries_file.write(json.dumps(scopus_queries, default=lambda o: o.__getstate__()))
         scopus_queries_file.close()
 
