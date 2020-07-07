@@ -147,12 +147,23 @@ def load_query(project_id, query_id):
     return load_xml_query_from_disc(path_to_file)
 
 
+def getIdentifier(query_xml):
+    try:
+        list_of_identifiers = query_xml.find('dc:identifier', namespaces)
+        for identifier in list_of_identifiers:
+            if identifier.attrib['type'] == 'sdg':
+                return identifier.attrib['field'].strip(' \t\n\r')
+    except:
+        return ''
+
+
 def load_xml_query_from_disc(path_to_file):
     element_tree.register_namespace('aqd', namespaces['aqd'])
     element_tree.register_namespace('dc', namespaces['dc'])
-    with open(path_to_file, 'r') as xml_file:
+    with open(path_to_file, 'r', encoding='utf-8') as xml_file:
         query_xml = element_tree.parse(xml_file).getroot()
-        query = Query(identifier=get_field_value(query_xml, 'identifier', 'dc'),
+        identifier = getIdentifier(query_xml)
+        query = Query(identifier=identifier,
                       query_definitions=None,
                       title=get_field_value(query_xml, 'title', 'dc'),
                       description=get_field_value(query_xml, 'description', 'dc'),
