@@ -47,6 +47,7 @@ def data_collection_execution(project_id):
 
     with app.app_context():
         keys = app.config.get("SCOPUS_API_KEY")
+        print('loaded API key ' + keys)
 
     # initialize status, set to collecting and save status
     status = Status("DATA_COLLECTING")
