@@ -264,7 +264,10 @@ def add_query_ids(project_id):
     for query_id in query_ids:
         eids = eids_service.load_eid_list(project_id, prefix=query_id + '_')
         for eid in eids:
-            record = elasticsearch_service.get_record(project_id, eid)
+            try:
+                record = elasticsearch_service.get_record(project_id, eid)
+            except:
+                continue
             if query_id in record['query_id']:
                 continue
             if record['query_id'] == '':
