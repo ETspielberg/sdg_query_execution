@@ -182,8 +182,15 @@ def collect_data(eids, project_id, project_name, i, key, app):
             doi = scopus_abstract.doi
             if doi is not None:
                 if doi is not "":
-                    response.unpaywall_response = Unpaywall(doi)
-                    response.altmetric_response = Altmetric(doi)
+                    try:
+                        response.unpaywall_response = Unpaywall(doi)
+                    except:
+                        app.logger.warning('project {}: could not collect unpaywall data for EID {}'.format(project_id, eid))
+                    try:
+                        response.altmetric_response = Altmetric(doi)
+                    except:
+                        app.logger.warning(
+                            'project {}: could not collect altmetric data for EID {}'.format(project_id, eid))
                     response.scival_data = Scival([])
 
             # send response to elastic search index
