@@ -45,7 +45,7 @@ pbr==4.3.0
 plac==0.9.6
 pluggy==0.13.1
 preshed==1.0.1
-py==1.8.0
+py==1.10.0
 py-eureka-client==0.7.4
 pybliometrics==2.5.0
 pycparser==2.19
