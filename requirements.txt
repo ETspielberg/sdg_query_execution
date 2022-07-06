@@ -27,7 +27,7 @@ importlib-metadata==1.2.0
 itsdangerous==0.24
 Jinja2==2.10.1
 kiwisolver==1.0.1
-lxml==4.2.5
+lxml==4.9.1
 MarkupSafe==1.0
 matplotlib==3.0.0
 mkl-fft==1.0.6
